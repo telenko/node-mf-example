@@ -5,18 +5,19 @@ const { NodeAsyncHttpRuntime } = require("@telenko/node-mf");
 const path = require("path");
 const packageJson = require("./package.json");
 
-const commonConfig = (remoteEntryName, distFolder, port) => ({
-    entry: "./src/index.js",
+const getConfig = (target) => ({
+  entry: "./src/index.js",
+  target: target === "web" ? "web" : false,
   mode: "development",
   devtool: "hidden-source-map",
   output: {
-    path: path.resolve(__dirname, distFolder),
-    publicPath: `http://localhost:${port}/${distFolder.split("/")[1]}/`,
+    path: path.resolve(__dirname, "dist", target),
+    publicPath: `http://localhost:3002/${target}/`,
     clean: true,
   },
   devServer: {
     compress: true,
-    port: port,
+    port: "3002",
   },
   resolve: {
     extensions: [
@@ -60,39 +61,29 @@ const commonConfig = (remoteEntryName, distFolder, port) => ({
   plugins: [
     new ModuleFederationPlugin({
       name: "remoteLib",
-      filename: remoteEntryName,
+      filename: "remoteEntry.js",
       exposes: {
-        "./SmartButton": "./src/SmartButton.jsx"
+        "./SmartButton": "./src/SmartButton.jsx",
       },
       shared: {
-          react: {
-              singleton: true,
-              requiredVersion: packageJson.dependencies['react']
-          },
-          ['react-dom']: {
-              singleton: true,
-              requiredVersion: packageJson.dependencies['react-dom']
-          }
-      }
+        react: {
+          singleton: true,
+          requiredVersion: packageJson.dependencies["react"],
+        },
+        ["react-dom"]: {
+          singleton: true,
+          requiredVersion: packageJson.dependencies["react-dom"],
+        },
+      },
     }),
-    new HtmlWebpackPlugin({
-      template: "./public/index.html",
-    }),
+    ...(target === "web"
+      ? [
+          new HtmlWebpackPlugin({
+            template: "./public/index.html",
+          }),
+        ]
+      : [new NodeAsyncHttpRuntime()]),
   ],
 });
 
-const webConfig = commonConfig('remoteEntry.js', "dist/web", 3002);
-let nodeConfig = commonConfig('remoteEntry.js', "dist/node", 3002);
-nodeConfig = {
-    ...nodeConfig,
-    plugins: [
-        ...nodeConfig.plugins,
-        new NodeAsyncHttpRuntime()
-    ],
-    target: false
-};
-
-module.exports = [
-    webConfig,
-    nodeConfig
-];
+module.exports = [getConfig("web"), getConfig("node")];
