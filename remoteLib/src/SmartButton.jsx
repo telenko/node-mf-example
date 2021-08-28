@@ -1,10 +1,9 @@
 import React from "react";
-import { Button } from "@material-ui/core";
 
 const SmartButton = () => {
-    return <Button>
+    return <div>
         Hey, I'm a smart button
-    </Button>
+    </div>
 };
 
 export default SmartButton;

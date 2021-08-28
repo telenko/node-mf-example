@@ -4,30 +4,13 @@ const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPl
 const path = require("path");
 
 module.exports = {
-  future: { webpack5: true },
   webpack: (config, options) => {
     const { buildId, dev, isServer, defaultLoaders, webpack } = options;
     const mfConf = {
       remotes: {
         remoteLib: isServer
           ? "remoteLib@http://localhost:3002/node/remoteEntry.js"
-          //This is a hack (I cannot run successfully MF in client-side with NextJS and React, maybe doing smth wrong)
-          : {
-            external: `external new Promise((r, j) => {
-              window['remoteLib'].init({
-                react: {
-                  "${packageJsonDeps.react}": {
-                    get: () => Promise.resolve().then(() => () => globalThis.React),
-                  }
-                }
-              });
-              r({
-                get: (request) => window['remoteLib'].get(request),
-                init: (args) => {}
-              });
-            })`
-          }
-          // : "remoteLib@http://localhost:3001/remoteEntry.js",
+          : "remoteLib@http://localhost:3002/web/remoteEntry.js"
       },
       shared: {
         react: {
